@@ -12,15 +12,16 @@ class User(db.Model):
 
 class Subject(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(120), unique=True, nullable=False)
+    name = db.Column(db.String(), unique=True, nullable=False)
     description = db.Column(db.Text, nullable=True)
 
 class Chapter(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(120), nullable=False)
+    name = db.Column(db.String(), nullable=False)
     description = db.Column(db.Text, nullable=True)
-    subject_id = db.Column(db.Integer, db.ForeignKey('subject.id'), nullable=False)
-    subject = db.relationship('Subject', backref=db.backref('chapters', lazy=True))
+    num_questions = db.Column(db.Integer, nullable=False)
+    subject_id = db.Column(db.Integer, db.ForeignKey('subject.id',  ondelete="CASCADE"), nullable=False)
+    subject = db.relationship('Subject', backref=db.backref('chapters', lazy=True, cascade="all, delete"))
 
 class Quiz(db.Model):
     id = db.Column(db.Integer, primary_key=True)

@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,23 +8,25 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="/static/style.css">
 </head>
+
 <body>
 
     <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <nav class="navbar navbar-expand-lg" style="background-color: #343a40; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1)">
         <div class="container-fluid">
-            <a class="navbar-brand" href="#">Quiz Master - Admin</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <a class="navbar-brand text-light fw-bold" href="#">Quiz Master - Admin</a>
+            <button class="navbar-toggler" type="button">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav me-auto">
-                    <li class="nav-item"><a class="nav-link active" href="#">Home</a></li>
-                    <li class="nav-item"><a class="nav-link" href="#">Quiz</a></li>
-                    <li class="nav-item"><a class="nav-link" href="#">Summary</a></li>
-                    <li class="nav-item"><a class="nav-link text-danger" href="/login">Logout</a></li>
+                    <li class="nav-item"><a class="nav-link active text-light" href="/admin_dash">Home</a></li>
+                    <li class="nav-item"><a class="nav-link text-light" href="/quiz_creator" target="_blank">Quiz</a>
+                    </li>
+                    <li class="nav-item"><a class="nav-link text-light" href="#">Summary</a></li>
+                    <li class="nav-item"><a class="nav-link text-danger fw-bold" href="/login">Logout</a></li>
                 </ul>
-                
+
                 <!-- Search Box -->
                 <form class="d-flex">
                     <input class="form-control me-2" type="search" placeholder="Search..." aria-label="Search">
@@ -40,8 +43,55 @@
 
     <!-- Main Content -->
     <div class="container mt-5">
-        <h2>Admin Dashboard</h2>
-    </div>
+        <h2 style="text-align: center;">Admin Dashboard</h2>
 
+        <!-- Button to Show Subject Creation Form -->
+        <a href="/add_subject" class="btn btn-primary mt-3">Create Subject</a>
+
+        <div class="container mt-4">
+            <p class="text-center mb-4 fs-2 fw-bold">Created Subjects</p>
+
+            <div class="row">
+                {% for subject in subjects %}
+                <div class="col-12 col-md-6 mb-4">
+                    <div class="card border shadow-sm p-3 rounded-4">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <h5 class="card-title">{{ subject.name }}</h5>
+                                <a href="/add_chapter/{{ subject.id }}" class="btn btn-primary mb-3">Add Chapter</a>
+                            </div>
+
+                            <table class="table table-bordered">
+                                <thead>
+                                    <tr>
+                                        <th>Chapter Name</th>
+                                        <th>Number of Questions</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for chapter in subject.chapters %}
+                                    <tr>
+                                        <td>{{ chapter.name }}</td>
+                                        <td>{{ chapter.num_questions }}</td>
+                                        <td>
+                                            <a href="/edit_chapter/{{ chapter.id }}"
+                                                class="btn btn-warning btn-sm me-2">Edit</a>
+                                            <a href="/delete_chapter/{{ chapter.id }}"
+                                                class="btn btn-danger btn-sm">Delete</a>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
 </body>
+
 </html>

@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Question</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+
+<div class="container mt-5">
+    <h2 class="text-center">Add Question</h2>
+
+    <p class="text-center fs-5"><strong>Chapter:</strong> {{ chapter.name }}</p>
+    <form action="/save_question/{{ quiz.id }}" method="POST">
+        
+        <div class="mb-3">
+            <label for="question_title" class="form-label">Question Title</label>
+            <input type="text" class="form-control" id="question_title" name="question_title" required>
+        </div>
+
+        <div class="mb-3">
+            <label for="question_statement" class="form-label">Question Statement</label>
+            <textarea class="form-control" id="question_statement" name="question_statement" required></textarea>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Options</label>
+            <input type="text" class="form-control mb-2" name="option_a" placeholder="Option A" required>
+            <input type="text" class="form-control mb-2" name="option_b" placeholder="Option B" required>
+            <input type="text" class="form-control mb-2" name="option_c" placeholder="Option C" required>
+            <input type="text" class="form-control mb-2" name="option_d" placeholder="Option D" required>
+        </div>
+
+        <div class="mb-3">
+            <label for="correct_option" class="form-label">Correct Answer</label>
+            <select class="form-select" id="correct_option" name="correct_option" required>
+                <option value="" selected disabled>-- Select Correct Option --</option>
+                <option value="A">Option A</option>
+                <option value="B">Option B</option>
+                <option value="C">Option C</option>
+                <option value="D">Option D</option>
+            </select>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Save & Next</button>
+        <a href="/quiz_creator" class="btn btn-secondary">Close</a>
+    </form>
+</div>
+
+</body>
+</html>

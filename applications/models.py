@@ -20,27 +20,31 @@ class Chapter(db.Model):
     name = db.Column(db.String(), nullable=False)
     description = db.Column(db.Text, nullable=True)
     num_questions = db.Column(db.Integer, nullable=False)
-    subject_id = db.Column(db.Integer, db.ForeignKey('subject.id',  ondelete="CASCADE"), nullable=False)
+    subject_id = db.Column(db.Integer, db.ForeignKey('subject.id', ondelete="CASCADE"), nullable=False)
     subject = db.relationship('Subject', backref=db.backref('chapters', lazy=True, cascade="all, delete"))
 
 class Quiz(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     chapter_id = db.Column(db.Integer, db.ForeignKey('chapter.id'), nullable=False)
+    chapter = db.relationship('Chapter', backref='quizzes')  # <-- Added this line
     date_of_quiz = db.Column(db.String(10), nullable=False)
-    time_duration = db.Column(db.String(5), nullable=False)  # Format: HH:MM
+    time_duration = db.Column(db.String(5), nullable=False)
     remarks = db.Column(db.Text, nullable=True)
-    chapter = db.relationship('Chapter', backref=db.backref('quizzes', lazy=True))
+    num_questions = db.Column(db.Integer, nullable=False, default=0)
+
+    questions = db.relationship('Question', backref='quiz', lazy=True)
 
 class Question(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     quiz_id = db.Column(db.Integer, db.ForeignKey('quiz.id'), nullable=False)
+    chapter_id = db.Column(db.Integer, db.ForeignKey('chapter.id'), nullable=False)
+    title = db.Column(db.String(), nullable=False)
     question_statement = db.Column(db.Text, nullable=False)
-    option1 = db.Column(db.String(255), nullable=False)
-    option2 = db.Column(db.String(255), nullable=False)
-    option3 = db.Column(db.String(255), nullable=False)
-    option4 = db.Column(db.String(255), nullable=False)
-    correct_option = db.Column(db.Integer, nullable=False)  # Stores option number (1-4)
-    quiz = db.relationship('Quiz', backref=db.backref('questions', lazy=True))
+    option_a = db.Column(db.String(), nullable=False)
+    option_b = db.Column(db.String(), nullable=False)
+    option_c = db.Column(db.String(), nullable=False)
+    option_d = db.Column(db.String(), nullable=False)
+    correct_option = db.Column(db.String(1), nullable=False)  # A, B, C, or D
 
 class Score(db.Model):
     id = db.Column(db.Integer, primary_key=True)

@@ -15,9 +15,6 @@
     <nav class="navbar navbar-expand-lg" style="background-color: #343a40; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1)">
         <div class="container-fluid">
             <a class="navbar-brand text-light fw-bold" href="#">Quiz Creator</a>
-            <button class="navbar-toggler" type="button">
-                <span class="navbar-toggler-icon"></span>
-            </button>
             <div class="collapse navbar-collapse">
                 <ul class="navbar-nav me-auto">
                     <li class="nav-item"><a class="nav-link active text-light" href="/admin_dash">Home</a></li>
@@ -26,8 +23,8 @@
                 </ul>
 
                 <!-- Search Box -->
-                <form class="d-flex">
-                    <input class="form-control me-2" type="search" placeholder="Search..." aria-label="Search">
+                <form class="d-flex" method="GET" action="/quiz_creator">
+                    <input class="form-control me-2" name="chap_name" type="search" placeholder="Search by Chapter..." aria-label="Search">
                     <button class="btn btn-outline-light" type="submit">Search</button>
                 </form>
 
@@ -39,51 +36,34 @@
         </div>
     </nav>
 
-    <!-- Main Content -->
-    <div class="container mt-5">
-        <h2 style="text-align: center;">Quiz Creator Tool</h2>
+    <div class="container mt-4">
+        <!-- Add Quiz Button -->
+        <a href="/add_quiz" class="btn btn-primary mb-3">Add Quiz</a>
 
-        <div class="container mt-4">
-            <div class="row">
-                {% for subject in subjects %}
-                <div class="col-12 col-md-6 mb-4">
-                    <div class="card border shadow-sm p-3 rounded-4">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <h5 class="card-title">{{ subject.name }}</h5>
-                                <a href="/add_quiz/{{ subject.id }}" class="btn btn-primary mb-3">Add Quiz</a>
-                            </div>
+        <p class="text-center mb-4 fs-2 fw-bold">Created Quizzes</p>
 
-                            <!-- Table for Quizzes Under Each Subject -->
-                            <table class="table table-bordered">
-                                <thead>
-                                    <tr>
-                                        <th>Quiz Name</th>
-                                        <th>Number of Questions</th>
-                                        <th>Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for quiz in subject.quizzes %}
-                                    <tr>
-                                        <td>{{ quiz.name }}</td>
-                                        <td>{{ quiz.num_questions }}</td>
-                                        <td>
-                                            <a href="/edit_quiz/{{ quiz.id }}"
-                                                class="btn btn-warning btn-sm me-2">Edit</a>
-                                            <a href="/delete_quiz/{{ quiz.id }}"
-                                                class="btn btn-danger btn-sm">Delete</a>
-                                        </td>
-                                    </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
+        <div class="row">
+            {% for quiz in quizzes %}
+            <div class="col-12 col-md-6 mb-4">
+                <div class="card border shadow-sm p-3 rounded-4">
+                    <div class="card-body">
+                        <h5 class="card-title">Quiz on {{ quiz.chapter.name }}</h5>
+                        <p><strong>Date:</strong> {{ quiz.date_of_quiz }}</p>
+                        <p><strong>Duration:</strong> {{ quiz.time_duration }}</p>
+                        <p><strong>Remarks:</strong> {{ quiz.remarks }}</p>
+                        <p><strong>Number of Questions:</strong> {{ quiz.questions|length }}</p>
 
+                        <div class="d-flex justify-content-center gap-4 flex-wrap">
+                            <a href="/edit_quiz/{{ quiz.id }}" class="btn btn-warning btn-sm px-3">Edit</a>
+                            <a href="/delete_quiz/{{ quiz.id }}" class="btn btn-danger btn-sm px-3"
+                                onclick="return confirm('Are you sure you want to delete this quiz?')">Delete</a>
+                            <a href="/add_question/{{ quiz.chapter_id }}/{{ quiz.id }}"
+                                class="btn btn-success btn-sm px-3">Add Questions</a>
                         </div>
                     </div>
                 </div>
-                {% endfor %}
             </div>
+            {% endfor %}
         </div>
     </div>
 

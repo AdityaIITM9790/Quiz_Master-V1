@@ -2,6 +2,7 @@ from flask import Flask, render_template, request, session, redirect
 from flask import current_app as app
 from .models import *
 from applications.database import db
+from datetime import datetime
 
 # app = Flask(__name__)
 app.secret_key = 'your_secret_key'
@@ -45,6 +46,7 @@ def register():
         full_name = request.form.get('name')
         qualification = request.form.get('qualification')
         dob = request.form.get('dob')
+        dob = datetime.strptime(dob, "%Y-%m-%d").date()
 
         # Check if the user already exists
         this_user = User.query.filter_by(email=email).first()

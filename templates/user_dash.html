@@ -20,7 +20,7 @@
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav me-auto">
                     <li class="nav-item">
-                        <a class="nav-link active" href="#">Home</a>
+                        <a class="nav-link active" href="/user_dash">Home</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="#">Scores</a>
@@ -49,53 +49,39 @@
         <p><strong>Email:</strong> {{ this_user.email }}</p>
         <p><strong>Full Name:</strong> {{ this_user.full_name }}</p>
         <p><strong>Qualification:</strong> {{ this_user.qualification }}</p>
-        <p><strong>Date of Birth:</strong> {{ this_user.dob }}</p>
+        <p><strong>Date of Birth:</strong> {{ this_user.dob.strftime('%d-%b-%Y') }}</p>
 
         <!-- Upcoming Quizzes Table -->
         <h3 class="mt-4" style="text-align: center; margin-bottom: 10px;">Upcoming Quizzes</h3>
-        <table class="table table-bordered table-striped">
-            <thead class="table-dark">
-                <tr>
-                    <th>ID</th>
-                    <th>Number of Questions</th>
-                    <th>Date</th>
-                    <th>Duration</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td>1</td>
-                    <td>10</td>
-                    <td>2025-03-25</td>
-                    <td>30 min</td>
-                    <td>
-                        <button class="btn btn-info me-2">View</button>
-                        <button class="btn btn-success me-2">Start</button>
-                    </td>
-                </tr>
-                <tr>
-                    <td>2</td>
-                    <td>15</td>
-                    <td>2025-03-27</td>
-                    <td>45 min</td>
-                    <td>
-                        <button class="btn btn-info me-2">View</button>
-                        <button class="btn btn-success me-2">Start</button>
-                    </td>
-                </tr>
-                <tr>
-                    <td>3</td>
-                    <td>20</td>
-                    <td>2025-03-30</td>
-                    <td>60 min</td>
-                    <td>
-                        <button class="btn btn-info me-2">View</button>
-                        <button class="btn btn-success me-2">Start</button>
-                    </td>
-                </tr>
-            </tbody>
-        </table>
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover rounded-3 shadow-sm overflow-hidden text-center">
+                <thead class="table-dark">
+                    <tr>
+                        <th class="text-center align-middle">Subject</th>
+                        <th class="text-center align-middle">Chapter</th>
+                        <th class="text-center align-middle">Schedule Date</th>
+                        <th class="text-wrap" style="width: 150px;">Quiz Duration (Hours)</th>
+                        <th class="text-center align-middle">Number of Questions</th>
+                        <th class="text-center align-middle">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                <tbody>
+                    {% for quiz in quizzes %}
+                    <tr>
+                        <td>{{ quiz.chapter.subject.name }}</td>
+                        <td>{{ quiz.chapter.name }}</td> <!-- Chapter Name -->
+                        <td>{{ quiz.date_of_quiz.strftime('%d-%b-%Y') }}</td> <!-- Date -->
+                        <td>{{ quiz.time_duration }}</td> <!-- Duration -->
+                        <td>{{ quiz.questions|length }}</td> <!-- Number of Questions -->
+                        <td>
+                            <a href="/start_quiz/{{ quiz.id }}" class="btn btn-success me-2">Start</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     </div>
 </body>
 

@@ -1,4 +1,5 @@
 from .database import db
+from datetime import date
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -7,7 +8,7 @@ class User(db.Model):
     password = db.Column(db.String(), nullable=False)
     full_name = db.Column(db.String(), nullable=False)
     qualification = db.Column(db.String(), nullable=False)
-    dob = db.Column(db.String(), nullable=False)
+    dob = db.Column(db.Date, nullable=False)
     role = db.Column(db.String(), nullable=False, default='user')  # 'admin' or 'user'
 
 class Subject(db.Model):
@@ -19,15 +20,15 @@ class Chapter(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(), nullable=False)
     description = db.Column(db.Text, nullable=True)
-    num_questions = db.Column(db.Integer, nullable=False)
+    num_questions = db.Column(db.Integer, nullable=False, default=0)
     subject_id = db.Column(db.Integer, db.ForeignKey('subject.id', ondelete="CASCADE"), nullable=False)
     subject = db.relationship('Subject', backref=db.backref('chapters', lazy=True, cascade="all, delete"))
 
 class Quiz(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     chapter_id = db.Column(db.Integer, db.ForeignKey('chapter.id'), nullable=False)
-    chapter = db.relationship('Chapter', backref='quizzes')  # <-- Added this line
-    date_of_quiz = db.Column(db.String(10), nullable=False)
+    chapter = db.relationship('Chapter', backref='quizzes', lazy=True)  # <-- Added this line
+    date_of_quiz = db.Column(db.Date, nullable=False)
     time_duration = db.Column(db.String(5), nullable=False)
     remarks = db.Column(db.Text, nullable=True)
     num_questions = db.Column(db.Integer, nullable=False, default=0)

@@ -26,7 +26,8 @@ def login():
                     all_subjects = Subject.query.all()
                     return render_template('admin_dash.html', this_user=this_user, subjects=all_subjects)
                 else:  # Redirect normal users to user dashboard
-                    return render_template('user_dash.html', this_user=this_user)
+                    quizzes = Quiz.query.all()  # Fetch all quizzes
+                    return render_template('user_dash.html', quizzes=quizzes, this_user=this_user)
 
         return render_template('login.html', error="Invalid credentials, please try again.")
 
@@ -160,6 +161,36 @@ def admin_dashboard():
     subjects = Subject.query.all()
 
     return render_template('admin_dash.html', this_user=admin_user, subjects=subjects)
+
+
+################################# USER Dashboard ############################################
+
+@app.route('/user_dash')
+def user_dash():
+    """
+    Display the user dashboard with all available quizzes.
+    """
+    quizzes = Quiz.query.all()  # Fetch all quizzes
+    user = User.query.filter_by(role='user').first()  # Get the logged-in user
+    # chapters = Chapter.query.all()  # Fetch chapters
+
+     # Ensure quizzes load related questions
+    for quiz in quizzes:
+        quiz.num_questions = len(quiz.questions)  # Force load questions
+
+
+    return render_template('user_dash.html', quizzes=quizzes, this_user=user)
+
+
+@app.route('/start_quiz/<int:quiz_id>')
+def start_quiz(quiz_id):
+    """
+    Start the quiz.
+    """
+    quiz = Quiz.query.get_or_404(quiz_id)
+    return render_template('start_quiz.html', quiz=quiz)
+
+
 
 ################################# QUIZ Sesion ############################################
 

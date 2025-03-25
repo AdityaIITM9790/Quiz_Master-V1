@@ -65,18 +65,16 @@
                                 <thead>
                                     <tr>
                                         <th>Chapter Name</th>
-                                        <!-- <th>Number of Questions</th> -->
+                                        <th>Description</th>
                                         <th>Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {% for chapter in subject.chapters %}
                                     <tr>
-                                        <td class="d-flex justify-content-center gap-3"     >{{ chapter.name }}</td>
-                                        <!-- <td>{{ chapter.num_questions }}</td> -->
+                                        <td class="d-flex justify-content-center gap-3">{{ chapter.name }}</td>
+                                        <td>{{ chapter.description }}</td>
                                         <td>
-                                            <a href="/edit_chapter/{{ chapter.id }}"
-                                                class="btn btn-warning btn-sm me-2">Edit</a>
                                             <a href="/delete_chapter/{{ chapter.id }}"
                                                 class="btn btn-danger btn-sm">Delete</a>
                                         </td>

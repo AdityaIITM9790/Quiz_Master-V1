@@ -167,31 +167,75 @@ def admin_dashboard():
 
 ################################# USER Dashboard ############################################
 
-@app.route('/user_dash')
+@app.route('/user_dash', methods=['GET'])
 def user_dash():
     """
     Display the user dashboard with all available quizzes.
     """
-    quizzes = Quiz.query.all()  # Fetch all quizzes
     user = User.query.filter_by(role='user').first()  # Get the logged-in user
+
+    search_query = request.args.get('search', '').strip()
+    if search_query:
+        quizzes = Quiz.query.join(Chapter).join(Subject).filter(
+            (Chapter.name.ilike(f"%{search_query}%")) |
+            (Subject.name.ilike(f"%{search_query}%"))
+        ).all()
+    else:
+        quizzes = Quiz.query.all()  # Fetch all quizzes
+        
     # chapters = Chapter.query.all()  # Fetch chapters
 
-     # Ensure quizzes load related questions
+    # Ensure quizzes load related questions
     for quiz in quizzes:
         quiz.num_questions = len(quiz.questions)  # Force load questions
 
+    return render_template('user_dash.html', quizzes=quizzes, this_user=user, search_query=search_query)
 
-    return render_template('user_dash.html', quizzes=quizzes, this_user=user)
 
-
-@app.route('/start_quiz/<int:quiz_id>')
-def start_quiz(quiz_id):
+@app.route('/start_quiz/<int:quiz_id>/<int:user_id>')
+def start_quiz(quiz_id, user_id):
     """
     Start the quiz.
     """
-    quiz = Quiz.query.get_or_404(quiz_id)
-    return render_template('start_quiz.html', quiz=quiz)
+    quiz = Quiz.query.get(quiz_id)
+    user = User.query.get(user_id)
+    questions = Question.query.filter_by(quiz_id=quiz.id).all()
+    return render_template('start_quiz.html', quiz=quiz, questions=questions,this_user=user)
 
+
+@app.route('/submit_quiz/<int:quiz_id>/<int:user_id>', methods=['POST'])
+def submit_quiz(quiz_id, user_id):
+    """
+    Handles quiz submission, calculates the score, and stores it in the database.
+    """
+    this_user = User.query.get(user_id)
+    quiz = Quiz.query.get(quiz_id)
+    if not this_user:
+        return render_template('login.html', error="User not found. Please log in.")
+
+    # Fetch all questions for this quiz
+    questions = Question.query.filter_by(quiz_id=quiz_id).all()
+
+    # Calculate the score
+    total_score = 0
+    for question in questions:
+        selected_answer = request.form.get(f"q{question.id}")  # Get user's selected answer
+        if selected_answer == question.correct_option:  # Compare with correct answer
+            total_score += 1
+
+    # Store the attempt in the Score table
+    new_score = Score(
+        quiz_id=quiz_id,
+        user_id=this_user.id,
+        time_stamp_of_attempt=datetime.now(),
+        total_scored=total_score
+    )
+    db.session.add(new_score)
+    db.session.commit()
+
+    return render_template('quiz_result.html', total_score=total_score, 
+                           total_questions=len(questions), this_user=this_user,
+                           quiz=quiz)
 
 
 ################################# QUIZ Sesion ############################################
@@ -207,12 +251,12 @@ def quiz_creator():
 
     if not admin_user or admin_user.role != 'admin':
         return render_template('login.html', error="Unauthorized access!")
-    
+
     if search_query:
-        quizzes = Quiz.query.join(Chapter).filter(Chapter.name.ilike(f"%{search_query}%")).all()
+        quizzes = Quiz.query.join(Chapter).filter(
+            Chapter.name.ilike(f"%{search_query}%")).all()
     else:
         quizzes = Quiz.query.all()
-
 
     return render_template('quiz_creator.html', quizzes=quizzes, this_user=admin_user)
 
@@ -228,7 +272,8 @@ def add_quiz():
         num_questions = request.form.get("num_questions")
 
         if chapter_id:
-            new_quiz = Quiz(chapter_id=chapter_id, date_of_quiz=date_of_quiz, time_duration=time_duration, remarks=remarks,num_questions=int(num_questions))
+            new_quiz = Quiz(chapter_id=chapter_id, date_of_quiz=date_of_quiz,
+                            time_duration=time_duration, remarks=remarks, num_questions=int(num_questions))
             db.session.add(new_quiz)
             db.session.commit()
 
@@ -257,7 +302,7 @@ def save_quiz():
         db.session.commit()
 
     quizzes = Quiz.query.all()
-    
+
     return render_template('quiz_creator.html', quizzes=quizzes, this_user=User.query.filter_by(role='admin').first())
 
 
@@ -274,22 +319,24 @@ def delete_quiz_route(quiz_id):
     quizzes = Quiz.query.all()
     return render_template('quiz_creator.html', quizzes=quizzes, this_user=User.query.filter_by(role='admin').first())
 
+
 @app.route('/edit_quiz/<int:quiz_id>', methods=['GET', 'POST'])
 def edit_quiz(quiz_id):
     quiz = Quiz.query.get(quiz_id)
-    
+
     if request.method == 'POST':
         if quiz:
             quiz.date_of_quiz = request.form.get('date_of_quiz')
             quiz.time_duration = request.form.get('time_duration')
             quiz.remarks = request.form.get('remarks')
-            quiz.num_questions = int(request.form.get('num_questions', 0))  
+            quiz.num_questions = int(request.form.get('num_questions', 0))
 
             db.session.commit()  # Save the changes
         quizzes = Quiz.query.all()
         return render_template('quiz_creator.html', quizzes=quizzes, this_user=User.query.filter_by(role='admin').first())
 
     return render_template('edit_quiz.html', quiz=quiz)  # Show the edit form
+
 
 @app.route('/add_question/<int:chapter_id>/<int:quiz_id>')
 def add_question(chapter_id, quiz_id):
@@ -319,7 +366,7 @@ def save_question(quiz_id):
     # Save question
     new_question = Question(
         quiz_id=quiz.id,
-        chapter_id=quiz.chapter_id,  
+        chapter_id=quiz.chapter_id,
         title=title,
         question_statement=statement,
         option_a=option_a,

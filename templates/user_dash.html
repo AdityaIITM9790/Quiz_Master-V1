@@ -33,9 +33,10 @@
                     </li>
                 </ul>
                 <!-- Search Bar and Welcome Message -->
-                <form class="d-flex">
-                    <input class="form-control me-2" type="search" placeholder="Search..." aria-label="Search">
-                    <button class="btn btn-outline-light" type="submit">Search</button>
+                <form class="d-flex" action="/user_dash" style="min-width: 350px;">
+                    <input class="form-control me-3 w-150" type="search" name="search"
+                        placeholder="Search Chapter or Subject..." aria-label="Search" value="{{ search_query }}">
+                    <button class=" btn btn-outline-light" type="submit">Search</button>
                 </form>
                 <span class="navbar-text ms-3 text-light">
                     Welcome, {{ this_user.username }}!
@@ -75,7 +76,7 @@
                         <td>{{ quiz.time_duration }}</td> <!-- Duration -->
                         <td>{{ quiz.questions|length }}</td> <!-- Number of Questions -->
                         <td>
-                            <a href="/start_quiz/{{ quiz.id }}" class="btn btn-success me-2">Start</a>
+                            <a href="/start_quiz/{{ quiz.id }}/{{ this_user.id }}" class="btn btn-success me-2">Start</a>
                         </td>
                     </tr>
                     {% endfor %}

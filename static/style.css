@@ -25,3 +25,60 @@ h2 {
 .btn-primary:hover {
     background-color: #0056b3;
 }
+
+.quiz-container {
+    max-width: 800px;
+    margin: auto;
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+}
+
+.question-card {
+    background: #ffffff;
+    border-radius: 10px;
+    padding: 15px;
+    margin-bottom: 15px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.question-text {
+    font-size: 18px;
+    font-weight: 600;
+}
+
+/* .btn-submit {
+    width: 100%;
+    font-size: 18px;
+} */
+
+.user-info {
+    background-color: #f8f9fa;
+    padding: 15px;
+    border-radius: 10px;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    margin-bottom: 20px;
+}
+.quiz-container {
+    max-width: 800px;
+    margin: auto;
+}
+
+.user-info {
+    background-color: #f8f9fa;
+    padding: 15px;
+    border-radius: 10px;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    margin-bottom: 20px;
+}
+.quiz-container {
+    max-width: 800px;
+    margin: auto;
+}
+.card {
+    border-radius: 10px;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+}

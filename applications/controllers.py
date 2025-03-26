@@ -3,6 +3,9 @@ from flask import current_app as app
 from .models import *
 from applications.database import db
 from datetime import datetime
+import matplotlib.pyplot as plt
+import io
+import base64
 
 # app = Flask(__name__)
 app.secret_key = 'your_secret_key'
@@ -18,8 +21,7 @@ def login():
         password = request.form.get('password')
 
         # Check if user exists in database
-        this_user = User.query.filter_by(
-            email=email, password=password).first()
+        this_user = User.query.filter_by(email=email).first()
 
         if this_user:
             if this_user.password == password:
@@ -29,9 +31,11 @@ def login():
                 else:  # Redirect normal users to user dashboard
                     quizzes = Quiz.query.all()  # Fetch all quizzes
                     return render_template('user_dash.html', quizzes=quizzes, this_user=this_user)
-
-        return render_template('login.html', error="Invalid credentials, please try again.")
-
+            else:
+                return render_template('login.html', error="Invalid credentials, please try again.")
+        else:
+            return render_template('register.html', error="User not found, Please register.")
+        
     return render_template('login.html')
 
 
@@ -65,6 +69,24 @@ def register():
 
     return render_template('register.html')
 
+@app.route('/manage_users')
+def manage_users():
+    '''
+    Manage all users registered
+    '''
+    users = User.query.filter_by(role='user').all()
+    return render_template('manage_users.html', users=users)
+
+@app.route('/delete_user/<int:user_id>')
+def delete_user(user_id):
+    '''
+    Delete the user
+    '''
+    user = User.query.get(user_id)
+    if user and user.role == 'user':
+        db.session.delete(user)
+        db.session.commit()
+    return redirect('/manage_users')
 
 @app.route('/logout')
 def logout():
@@ -134,10 +156,20 @@ def save_chapter(subject_id):
 @app.route('/edit_chapter/<int:chapter_id>')
 def edit_chapter(chapter_id):
     '''
-    Editing a chapter i.r. removing or increasing the quiz questions based on the chapter id
+    redirecting to editing particular chapter
     '''
     chapter = Chapter.query.get(chapter_id)
     return render_template('edit_chapter.html', chapter=chapter)
+
+@app.route('/update_chapter/<int:chapter_id>', methods=['POST'])
+def update_chapter(chapter_id):
+    '''
+    Updating the chapter based on the chapter id'''
+    chapter = Chapter.query.get_or_404(chapter_id)
+    chapter.name = request.form.get('name')
+    chapter.description = request.form.get('description')
+    db.session.commit()
+    return redirect('/admin_dash')
 
 
 @app.route('/delete_chapter/<int:chapter_id>')
@@ -154,6 +186,7 @@ def delete_chapter(chapter_id):
     return render_template('admin_dash.html', subjects=Subject.query.all(), this_user=admin_user, chapters=chapters)
 
 
+
 @app.route('/admin_dash')
 def admin_dashboard():
     '''
@@ -167,12 +200,12 @@ def admin_dashboard():
 
 ################################# USER Dashboard ############################################
 
-@app.route('/user_dash', methods=['GET'])
-def user_dash():
+@app.route('/user_dash/<int:user_id>', methods=['GET'])
+def user_dash(user_id):
     """
     Display the user dashboard with all available quizzes.
     """
-    user = User.query.filter_by(role='user').first()  # Get the logged-in user
+    user = User.query.filter_by(role='user',id=user_id).first()  # Get the logged-in user
 
     search_query = request.args.get('search', '').strip()
     if search_query:
@@ -182,14 +215,13 @@ def user_dash():
         ).all()
     else:
         quizzes = Quiz.query.all()  # Fetch all quizzes
-        
-    # chapters = Chapter.query.all()  # Fetch chapters
 
     # Ensure quizzes load related questions
     for quiz in quizzes:
         quiz.num_questions = len(quiz.questions)  # Force load questions
 
-    return render_template('user_dash.html', quizzes=quizzes, this_user=user, search_query=search_query)
+    return render_template('user_dash.html', quizzes=quizzes, this_user=user, 
+                           search_query=search_query)
 
 
 @app.route('/start_quiz/<int:quiz_id>/<int:user_id>')
@@ -213,14 +245,17 @@ def submit_quiz(quiz_id, user_id):
     if not this_user:
         return render_template('login.html', error="User not found. Please log in.")
 
-    # Fetch all questions for this quiz
     questions = Question.query.filter_by(quiz_id=quiz_id).all()
 
     # Calculate the score
     total_score = 0
     for question in questions:
-        selected_answer = request.form.get(f"q{question.id}")  # Get user's selected answer
-        if selected_answer == question.correct_option:  # Compare with correct answer
+        selected_answer = request.form.get(f"q{question.id}")  # Get user selected answer
+        print(f"Question ID: {question.id}")
+        print(f"Selected Answer: {selected_answer}")
+        print(f"Correct Answer: {question.correct_option}")
+        print("-" * 50)  
+        if selected_answer == question.correct_option:
             total_score += 1
 
     # Store the attempt in the Score table
@@ -236,6 +271,19 @@ def submit_quiz(quiz_id, user_id):
     return render_template('quiz_result.html', total_score=total_score, 
                            total_questions=len(questions), this_user=this_user,
                            quiz=quiz)
+
+
+@app.route('/view_quiz_result/<int:user_id>')
+def view_quiz_result(user_id):
+    '''
+    See the result of quiz
+    '''
+    user = User.query.get(user_id)
+    # scores = Score.query.filter_by(user_id=user_id).all()
+    scores = Score.query.filter_by(user_id=user_id).join(Quiz).join(Chapter).join(Subject).all()
+
+    return render_template('view_quiz_result.html', this_user=user, 
+                           scores=scores)
 
 
 ################################# QUIZ Sesion ############################################
@@ -383,3 +431,77 @@ def save_question(quiz_id):
     # Reload add_question.html with the chapter name
     quizzes = Quiz.query.all()
     return render_template('quiz_creator.html', quizzes=quizzes, this_user=User.query.filter_by(role='admin').first())
+
+
+#####################################Summary for user###################################
+@app.route('/user_summary/<int:user_id>')
+def user_summary(user_id):
+    """
+    Display a summary of the user's quiz activity with charts.
+    """
+    user = User.query.get(user_id)
+    if not user:
+        return "User not found", 404
+
+    total_quizzes = Quiz.query.count()
+    attempted_quizzes = Score.query.filter_by(user_id=user_id).count()
+
+    # Subject-wise attempted quizzes
+    subject_attempts = (
+        db.session.query(Subject.name, db.func.count(Score.id))
+        .join(Chapter, Subject.id == Chapter.subject_id)
+        .join(Quiz, Chapter.id == Quiz.chapter_id)
+        .join(Score, Quiz.id == Score.quiz_id)
+        .filter(Score.user_id == user_id)
+        .group_by(Subject.name)
+        .all()
+    )
+
+    # Month-wise quiz attempts
+    month_attempts = (
+        db.session.query(db.func.strftime('%Y-%m', Score.time_stamp_of_attempt), db.func.count(Score.id))
+        .filter(Score.user_id == user_id)
+        .group_by(db.func.strftime('%Y-%m', Score.time_stamp_of_attempt))
+        .all()
+    )
+
+    quiz_attempts_chart = generate_chart(['Attempted', 'Not Attempted'], 
+                                         [attempted_quizzes, total_quizzes - attempted_quizzes], 
+                                         "Quiz Attempted vs Not Attempted")
+
+    subject_chart = generate_chart([subject for subject, _ in subject_attempts], 
+                                   [count for _, count in subject_attempts], 
+                                   "Subject-wise Quiz Attempts", bar_chart=True)
+
+    month_chart = generate_chart([month for month, _ in month_attempts], 
+                                 [count for _, count in month_attempts], 
+                                 "Month-wise Quiz Attempts", line_chart=True)
+
+    return render_template('user_summary.html', this_user=user, 
+                           quiz_attempts_chart=quiz_attempts_chart,
+                           subject_chart=subject_chart,
+                           month_chart=month_chart)
+
+def generate_chart(labels, values, title, bar_chart=False, line_chart=False):
+    """
+    Generate a Matplotlib chart and return it as a base64-encoded image.
+    """
+    plt.figure(figsize=(6, 4))
+
+    if bar_chart:
+        plt.bar(labels, values, color='blue')
+    elif line_chart:
+        plt.plot(labels, values, marker='o', linestyle='-', color='red')
+    else:
+        plt.pie(values, labels=labels, autopct='%1.1f%%', colors=['green', 'orange'])
+
+    plt.title(title)
+    plt.xticks(rotation=45)
+
+    img = io.BytesIO()
+    plt.savefig(img, format='png', bbox_inches='tight')
+    img.seek(0)
+    encoded_img = base64.b64encode(img.getvalue()).decode('utf-8')
+
+    plt.close()
+    return f"data:image/png;base64,{encoded_img}"

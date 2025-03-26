@@ -20,13 +20,13 @@
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav me-auto">
                     <li class="nav-item">
-                        <a class="nav-link active" href="/user_dash">Home</a>
+                        <a class="nav-link active" href="/user_dash/{{ this_user.id }}">Home</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#">Scores</a>
+                        <a class="nav-link" href="/view_quiz_result/{{this_user.id}}">Scores</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#">Summary</a>
+                        <a class="nav-link" href="/user_summary/{{ this_user.id }}">Summary</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link text-danger" href="/login">Logout</a>
@@ -83,6 +83,36 @@
                 </tbody>
             </table>
         </div>
+
+        <!-- <h3 class="mt-5 text-center">Quiz Results</h3>
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover rounded-3 shadow-sm overflow-hidden text-center">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Subject</th>
+                        <th>Chapter</th>
+                        <th>Quiz Date</th>
+                        <th>Score Obtained</th>
+                        <th>Total Questions</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for score in user_scores %}
+                    <tr>
+                        <td>{{ score.quiz.chapter.subject.name }}</td>
+                        <td>{{ score.quiz.chapter.name }}</td>
+                        <td>{{ score.quiz.date_of_quiz.strftime('%d-%b-%Y') }}</td>
+                        <td>{{ score.total_scored }}</td>
+                        <td>{{ score.quiz.questions|length }}</td>
+                        <td>
+                            <a href="/view_quiz_result/{{ score.quiz.id }}/{{ this_user.id }}" class="btn btn-info btn-sm">View Result</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div> -->
     </div>
 </body>
 

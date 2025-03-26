@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz Summary</title>
+</head>
+<body>
+
+    <div class="container mt-5">
+        <h2>Quiz Summary for {{ this_user.full_name }}</h2>
+
+        <div>
+            <h4>Quiz Attempted vs Not Attempted</h4>
+            <img src="{{ quiz_attempts_chart }}" alt="Quiz Attempts">
+        </div>
+
+        <div>
+            <h4>Subject-wise Quiz Attempts</h4>
+            <img src="{{ subject_chart }}" alt="Subject-wise Attempts">
+        </div>
+
+        <div>
+            <h4>Month-wise Quiz Attempts</h4>
+            <img src="{{ month_chart }}" alt="Month-wise Attempts">
+        </div>
+
+        <a href="/user_dash" class="btn btn-primary mt-3">Back to Dashboard</a>
+    </div>
+
+</body>
+</html>

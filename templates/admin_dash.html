@@ -46,7 +46,10 @@
         <h2 style="text-align: center;">Admin Dashboard</h2>
 
         <!-- Button to Show Subject Creation Form -->
-        <a href="/add_subject" class="btn btn-primary mt-3">Create Subject</a>
+        <div class="d-flex justify-content-center gap-3 mt-3">
+            <a href="/add_subject" class="btn btn-primary">Create Subject</a>
+            <a href="/manage_users" class="btn btn-warning">Manage Users</a>
+        </div>
 
         <div class="container mt-4">
             <p class="text-center mb-4 fs-2 fw-bold">Created Subjects</p>
@@ -75,8 +78,8 @@
                                         <td class="d-flex justify-content-center gap-3">{{ chapter.name }}</td>
                                         <td>{{ chapter.description }}</td>
                                         <td>
-                                            <a href="/delete_chapter/{{ chapter.id }}"
-                                                class="btn btn-danger btn-sm">Delete</a>
+                                            <a href="/edit_chapter/{{ chapter.id }}" class="btn btn-success btn-sm">Edit</a>
+                                            <a href="/delete_chapter/{{ chapter.id }}" class="btn btn-danger btn-sm">Delete</a>
                                         </td>
                                     </tr>
                                     {% endfor %}

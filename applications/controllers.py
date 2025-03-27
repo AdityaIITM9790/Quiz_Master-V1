@@ -35,7 +35,7 @@ def login():
                 return render_template('login.html', error="Invalid credentials, please try again.")
         else:
             return render_template('register.html', error="User not found, Please register.")
-        
+
     return render_template('login.html')
 
 
@@ -69,6 +69,7 @@ def register():
 
     return render_template('register.html')
 
+
 @app.route('/manage_users')
 def manage_users():
     '''
@@ -76,6 +77,7 @@ def manage_users():
     '''
     users = User.query.filter_by(role='user').all()
     return render_template('manage_users.html', users=users)
+
 
 @app.route('/delete_user/<int:user_id>')
 def delete_user(user_id):
@@ -87,6 +89,7 @@ def delete_user(user_id):
         db.session.delete(user)
         db.session.commit()
     return redirect('/manage_users')
+
 
 @app.route('/logout')
 def logout():
@@ -161,6 +164,7 @@ def edit_chapter(chapter_id):
     chapter = Chapter.query.get(chapter_id)
     return render_template('edit_chapter.html', chapter=chapter)
 
+
 @app.route('/update_chapter/<int:chapter_id>', methods=['POST'])
 def update_chapter(chapter_id):
     '''
@@ -186,7 +190,6 @@ def delete_chapter(chapter_id):
     return render_template('admin_dash.html', subjects=Subject.query.all(), this_user=admin_user, chapters=chapters)
 
 
-
 @app.route('/admin_dash')
 def admin_dashboard():
     '''
@@ -205,7 +208,8 @@ def user_dash(user_id):
     """
     Display the user dashboard with all available quizzes.
     """
-    user = User.query.filter_by(role='user',id=user_id).first()  # Get the logged-in user
+    user = User.query.filter_by(
+        role='user', id=user_id).first()  # Get the logged-in user
 
     search_query = request.args.get('search', '').strip()
     if search_query:
@@ -220,7 +224,7 @@ def user_dash(user_id):
     for quiz in quizzes:
         quiz.num_questions = len(quiz.questions)  # Force load questions
 
-    return render_template('user_dash.html', quizzes=quizzes, this_user=user, 
+    return render_template('user_dash.html', quizzes=quizzes, this_user=user,
                            search_query=search_query)
 
 
@@ -232,7 +236,7 @@ def start_quiz(quiz_id, user_id):
     quiz = Quiz.query.get(quiz_id)
     user = User.query.get(user_id)
     questions = Question.query.filter_by(quiz_id=quiz.id).all()
-    return render_template('start_quiz.html', quiz=quiz, questions=questions,this_user=user)
+    return render_template('start_quiz.html', quiz=quiz, questions=questions, this_user=user)
 
 
 @app.route('/submit_quiz/<int:quiz_id>/<int:user_id>', methods=['POST'])
@@ -250,11 +254,12 @@ def submit_quiz(quiz_id, user_id):
     # Calculate the score
     total_score = 0
     for question in questions:
-        selected_answer = request.form.get(f"q{question.id}")  # Get user selected answer
-        print(f"Question ID: {question.id}")
-        print(f"Selected Answer: {selected_answer}")
-        print(f"Correct Answer: {question.correct_option}")
-        print("-" * 50)  
+        selected_answer = request.form.get(
+            f"q{question.id}")  # Get user selected answer
+        # print(f"Question ID: {question.id}")
+        # print(f"Selected Answer: {selected_answer}")
+        # print(f"Correct Answer: {question.correct_option}")
+        # print("-" * 50)
         if selected_answer == question.correct_option:
             total_score += 1
 
@@ -268,7 +273,7 @@ def submit_quiz(quiz_id, user_id):
     db.session.add(new_score)
     db.session.commit()
 
-    return render_template('quiz_result.html', total_score=total_score, 
+    return render_template('quiz_result.html', total_score=total_score,
                            total_questions=len(questions), this_user=this_user,
                            quiz=quiz)
 
@@ -280,9 +285,10 @@ def view_quiz_result(user_id):
     '''
     user = User.query.get(user_id)
     # scores = Score.query.filter_by(user_id=user_id).all()
-    scores = Score.query.filter_by(user_id=user_id).join(Quiz).join(Chapter).join(Subject).all()
+    scores = Score.query.filter_by(user_id=user_id).join(
+        Quiz).join(Chapter).join(Subject).all()
 
-    return render_template('view_quiz_result.html', this_user=user, 
+    return render_template('view_quiz_result.html', this_user=user,
                            scores=scores)
 
 
@@ -433,7 +439,7 @@ def save_question(quiz_id):
     return render_template('quiz_creator.html', quizzes=quizzes, this_user=User.query.filter_by(role='admin').first())
 
 
-#####################################Summary for user###################################
+##################################### Summary for user###################################
 @app.route('/user_summary/<int:user_id>')
 def user_summary(user_id):
     """
@@ -457,30 +463,135 @@ def user_summary(user_id):
         .all()
     )
 
+    print(subject_attempts)
     # Month-wise quiz attempts
     month_attempts = (
-        db.session.query(db.func.strftime('%Y-%m', Score.time_stamp_of_attempt), db.func.count(Score.id))
+        db.session.query(db.func.strftime(
+            '%Y-%m', Score.time_stamp_of_attempt), db.func.count(Score.id))
         .filter(Score.user_id == user_id)
         .group_by(db.func.strftime('%Y-%m', Score.time_stamp_of_attempt))
         .all()
     )
 
-    quiz_attempts_chart = generate_chart(['Attempted', 'Not Attempted'], 
-                                         [attempted_quizzes, total_quizzes - attempted_quizzes], 
+    score_distribution = (
+        db.session.query(Score.total_scored)
+        .filter(Score.user_id == user_id)
+        .all()
+    )
+
+    score_values = [score[0] for score in score_distribution]
+
+    quiz_attempts_chart = generate_chart(['Attempted', 'Not Attempted'],
+                                         [attempted_quizzes, total_quizzes -
+                                             attempted_quizzes],
                                          "Quiz Attempted vs Not Attempted")
 
-    subject_chart = generate_chart([subject for subject, _ in subject_attempts], 
-                                   [count for _, count in subject_attempts], 
+    subject_chart = generate_chart([subject for subject, _ in subject_attempts],
+                                   [count for _, count in subject_attempts],
                                    "Subject-wise Quiz Attempts", bar_chart=True)
 
-    month_chart = generate_chart([month for month, _ in month_attempts], 
-                                 [count for _, count in month_attempts], 
+    month_chart = generate_chart([month for month, _ in month_attempts],
+                                 [count for _, count in month_attempts],
                                  "Month-wise Quiz Attempts", line_chart=True)
 
-    return render_template('user_summary.html', this_user=user, 
+    score_distribution_chart = generate_chart(
+        labels=list(set(score_values)),
+        values=[score_values.count(score) for score in set(score_values)],
+        title="Score Distribution",
+        bar_chart=True
+    )
+
+    return render_template('user_summary.html', this_user=user,
                            quiz_attempts_chart=quiz_attempts_chart,
                            subject_chart=subject_chart,
-                           month_chart=month_chart)
+                           month_chart=month_chart,
+                           score_distribution_chart=score_distribution_chart)
+
+
+########################################### Admin Summary #####################################
+@app.route('/admin_summary')
+def admin_summary():
+    """
+    Display a summary of all users' quiz activities with charts.
+    """
+
+    # Get total quizzes available
+    total_quizzes = Quiz.query.count()
+
+    # Get unique quizzes attempted at least once
+    total_attempted = db.session.query(db.func.count(
+        db.func.distinct(Score.quiz_id))).scalar() or 0
+
+    # Calculate quizzes not attempted
+    not_attempted = max(total_quizzes - total_attempted,
+                        0)  # Ensure non-negative
+
+    # Debugging print statement for quiz attempts
+    print(
+        f"DEBUG: Total Quizzes = {total_quizzes}, Unique Quizzes Attempted = {total_attempted}, Not Attempted = {not_attempted}")
+
+    # Get subject-wise top scorers
+    subject_top_scorers = (
+        db.session.query(Subject.name, User.username,
+                         db.func.max(Score.total_scored))
+        .join(Chapter, Subject.id == Chapter.subject_id)
+        .join(Quiz, Chapter.id == Quiz.chapter_id)
+        .join(Score, Quiz.id == Score.quiz_id)
+        .join(User, Score.user_id == User.id)
+        .group_by(Subject.name, User.username)
+        .all()
+    )
+    print(f"DEBUG: Subject Top Scorers = {subject_top_scorers}")  # Debugging
+
+    # Get average scores per subject
+    avg_scores = (
+        db.session.query(Subject.name, db.func.avg(Score.total_scored))
+        .join(Chapter, Subject.id == Chapter.subject_id)
+        .join(Quiz, Chapter.id == Quiz.chapter_id)
+        .join(Score, Quiz.id == Score.quiz_id)
+        .group_by(Subject.name)
+        .all()
+    )
+    print(f"DEBUG: Average Scores per Subject = {avg_scores}")  # Debugging
+
+    # Get month-wise quiz attempts
+    month_attempts = (
+        db.session.query(db.func.strftime(
+            '%Y-%m', Score.time_stamp_of_attempt), db.func.count(Score.id))
+        .group_by(db.func.strftime('%Y-%m', Score.time_stamp_of_attempt))
+        .all()
+    )
+    print(f"DEBUG: Month-wise Quiz Attempts = {month_attempts}")  # Debugging
+
+    # Generate Charts (Ensuring Values Are Valid)
+    quiz_attempts_chart = generate_chart(
+        ['Attempted', 'Not Attempted'],
+        [total_attempted, not_attempted],
+        "Total Quizzes Attempted vs Not Attempted"
+    )
+
+    avg_score_chart = generate_chart(
+        [subject for subject, _ in avg_scores] or ["No Data"],
+        [score for _, score in avg_scores] or [0],
+        "Average Score Per Subject",
+        bar_chart=True
+    )
+
+    month_chart = generate_chart(
+        [month for month, _ in month_attempts] or ["No Data"],
+        [count for _, count in month_attempts] or [0],
+        "Month-wise Quiz Attempts",
+        line_chart=True
+    )
+
+    return render_template(
+        'admin_summary.html',
+        quiz_attempts_chart=quiz_attempts_chart,
+        avg_score_chart=avg_score_chart,
+        month_chart=month_chart,
+        subject_top_scorers=subject_top_scorers
+    )
+
 
 def generate_chart(labels, values, title, bar_chart=False, line_chart=False):
     """
@@ -490,10 +601,15 @@ def generate_chart(labels, values, title, bar_chart=False, line_chart=False):
 
     if bar_chart:
         plt.bar(labels, values, color='blue')
+        plt.xlabel("Scores")  # Add X-axis label
+        plt.ylabel("Frequency")  # Add Y-axis label
     elif line_chart:
         plt.plot(labels, values, marker='o', linestyle='-', color='red')
+        plt.xlabel("Time")
+        plt.ylabel("Score")
     else:
-        plt.pie(values, labels=labels, autopct='%1.1f%%', colors=['green', 'orange'])
+        plt.pie(values, labels=labels, autopct='%1.1f%%',
+                colors=['green', 'orange'])
 
     plt.title(title)
     plt.xticks(rotation=45)

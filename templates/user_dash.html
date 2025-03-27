@@ -33,7 +33,7 @@
                     </li>
                 </ul>
                 <!-- Search Bar and Welcome Message -->
-                <form class="d-flex" action="/user_dash" style="min-width: 350px;">
+                <form class="d-flex" action="/user_dash/{{this_user.id}}" style="min-width: 350px;">
                     <input class="form-control me-3 w-150" type="search" name="search"
                         placeholder="Search Chapter or Subject..." aria-label="Search" value="{{ search_query }}">
                     <button class=" btn btn-outline-light" type="submit">Search</button>

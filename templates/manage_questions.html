@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Questions</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+
+<body>
+    <div class="container mt-4">
+        <h2 class="text-center">Manage Questions for {{ quiz.chapter.name }}</h2>
+
+        <form method="POST" action="/save_questions/{{ quiz.id }}">
+            <input type="hidden" name="action" value="{{ action }}">
+
+            <div class="list-group mt-3">
+                {% for question in questions %}
+                <div class="list-group-item d-flex justify-content-between align-items-center">
+                    <div>
+                        <strong>{{ question.title }}</strong><br>
+                        {{ question.question_statement }}
+                    </div>
+
+                    {% if action == 'edit' %}
+                    <a href="/edit_single_question/{{ question.id }}" class="btn btn-warning btn-sm">Edit</a>
+                    {% elif action == 'delete' %}
+                    <a href="/delete_single_question/{{ question.id }}" class="btn btn-danger btn-sm"
+                        onclick="return confirm('Are you sure you want to delete this question?')">Delete</a>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+
+            <div class="text-center mt-4">
+                <a href="/quiz_creator" class="btn btn-secondary">Back</a>
+            </div>
+        </form>
+    </div>
+</body>
+
+</html>

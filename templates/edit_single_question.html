@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Question</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+
+<body>
+    <div class="container mt-4">
+        <h2 class="text-center">Edit Question</h2>
+
+        <form method="POST" action="/edit_single_question/{{ question.id }}">
+            <div class="mb-3">
+                <label class="form-label">Question Title</label>
+                <input type="text" class="form-control" name="title" value="{{ question.title }}" required>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Question Statement</label>
+                <textarea class="form-control" name="statement" required>{{ question.question_statement }}</textarea>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Option A</label>
+                <input type="text" class="form-control" name="option_a" value="{{ question.option_a }}" required>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Option B</label>
+                <input type="text" class="form-control" name="option_b" value="{{ question.option_b }}" required>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Option C</label>
+                <input type="text" class="form-control" name="option_c" value="{{ question.option_c }}" required>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Option D</label>
+                <input type="text" class="form-control" name="option_d" value="{{ question.option_d }}" required>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Correct Answer</label>
+                <select class="form-select" name="correct_option" required>
+                    <option value="A" {% if question.correct_option=='A' %}selected{% endif %}>A</option>
+                    <option value="B" {% if question.correct_option=='B' %}selected{% endif %}>B</option>
+                    <option value="C" {% if question.correct_option=='C' %}selected{% endif %}>C</option>
+                    <option value="D" {% if question.correct_option=='D' %}selected{% endif %}>D</option>
+                </select>
+            </div>
+
+            <div class="text-center">
+                <button type="submit" class="btn btn-success">Save Changes</button>
+                <a href="/quiz_creator" class="btn btn-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+</body>
+
+</html>

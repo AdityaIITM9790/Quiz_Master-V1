@@ -190,13 +190,37 @@ def delete_chapter(chapter_id):
     return render_template('admin_dash.html', subjects=Subject.query.all(), this_user=admin_user, chapters=chapters)
 
 
-@app.route('/admin_dash')
+@app.route('/delete_subject/<int:subject_id>', methods=['POST'])
+def delete_subject(subject_id):
+    subject = Subject.query.get(subject_id)
+
+    if subject:
+        for chapter in subject.chapters:
+            Quiz.query.filter_by(chapter_id=chapter.id).delete()
+
+        Chapter.query.filter_by(subject_id=subject.id).delete()
+        db.session.delete(subject)
+        db.session.commit()
+
+    subjects = Subject.query.all()
+    return render_template('admin_dash.html', subjects=subjects, this_user=User.query.filter_by(role='admin').first())
+
+
+@app.route('/admin_dash', methods=['GET', 'POST'])
 def admin_dashboard():
     '''
     Render the admin dashboard with subjects and chapters.
     '''
     admin_user = User.query.filter_by(role='admin').first()
     subjects = Subject.query.all()
+
+    search_query = request.args.get('search_subject', '').strip()
+
+    if search_query:
+        subjects = Subject.query.filter(
+            Subject.name.ilike(f"%{search_query}%")).all()
+    else:
+        subjects = Subject.query.all()
 
     return render_template('admin_dash.html', this_user=admin_user, subjects=subjects)
 
@@ -320,10 +344,12 @@ def quiz_creator():
 def add_quiz():
     if request.method == 'POST':
         chapter_id = request.form.get('chapter_id')
-        date_of_quiz = request.form.get('date_of_quiz')
+        date_of_quiz_str = request.form.get('date_of_quiz')
         time_duration = request.form.get('time_duration')
         remarks = request.form.get('remarks')
         num_questions = request.form.get("num_questions")
+
+        date_of_quiz = datetime.strptime(date_of_quiz_str, "%Y-%m-%d").date()
 
         if chapter_id:
             new_quiz = Quiz(chapter_id=chapter_id, date_of_quiz=date_of_quiz,
@@ -367,6 +393,8 @@ def delete_quiz_route(quiz_id):
     '''
     quiz = Quiz.query.get(quiz_id)
     if quiz:
+        # Delete related questions
+        Question.query.filter_by(quiz_id=quiz.id).delete()
         db.session.delete(quiz)
         db.session.commit()
 
@@ -385,6 +413,9 @@ def edit_quiz(quiz_id):
             quiz.remarks = request.form.get('remarks')
             quiz.num_questions = int(request.form.get('num_questions', 0))
 
+            quiz.date_of_quiz = datetime.strptime(
+                quiz.date_of_quiz, "%Y-%m-%d").date()
+
             db.session.commit()  # Save the changes
         quizzes = Quiz.query.all()
         return render_template('quiz_creator.html', quizzes=quizzes, this_user=User.query.filter_by(role='admin').first())
@@ -401,6 +432,17 @@ def add_question(chapter_id, quiz_id):
         return "Invalid Quiz or Chapter", 404  # Handle invalid cases
 
     return render_template('add_question.html', chapter=chapter, quiz=quiz)
+
+
+@app.route('/edit_question/<int:quiz_id>')
+def edit_question(quiz_id):
+    quiz = Quiz.query.get(quiz_id)
+    questions = Question.query.filter_by(quiz_id=quiz_id).all()
+
+    if not quiz:
+        return "Quiz not found", 404
+
+    return render_template('edit_question.html', quiz=quiz, questions=questions)
 
 
 @app.route('/save_question/<int:quiz_id>', methods=['POST'])
@@ -439,7 +481,52 @@ def save_question(quiz_id):
     return render_template('quiz_creator.html', quizzes=quizzes, this_user=User.query.filter_by(role='admin').first())
 
 
+@app.route('/manage_questions/<int:quiz_id>/<action>')
+def manage_questions(quiz_id, action):
+    '''
+    Manahement of quizes for each quiz
+    '''
+    quiz = Quiz.query.get(quiz_id)
+    questions = Question.query.filter_by(quiz_id=quiz_id).all()
+
+    return render_template('manage_questions.html', quiz=quiz, questions=questions, action=action)
+
+
+@app.route('/edit_single_question/<int:question_id>', methods=['GET', 'POST'])
+def edit_single_question(question_id):
+    '''
+    Edit each question
+    '''
+    question = Question.query.get(question_id)
+
+    if request.method == 'POST':
+        question.title = request.form.get('title')
+        question.question_statement = request.form.get('statement')
+        question.option_a = request.form.get('option_a')
+        question.option_b = request.form.get('option_b')
+        question.option_c = request.form.get('option_c')
+        question.option_d = request.form.get('option_d')
+        question.correct_option = request.form.get('correct_option')
+
+        db.session.commit()
+        return render_template('quiz_creator.html', quizzes=Quiz.query.all(), this_user=User.query.filter_by(role='admin').first())
+
+    return render_template('edit_single_question.html', question=question)
+
+
+@app.route('/delete_single_question/<int:question_id>')
+def delete_single_question(question_id):
+    question = Question.query.get(question_id)
+
+    if question:
+        db.session.delete(question)
+        db.session.commit()
+
+    return render_template('quiz_creator.html', quizzes=Quiz.query.all(), this_user=User.query.filter_by(role='admin').first())
+
 ##################################### Summary for user###################################
+
+
 @app.route('/user_summary/<int:user_id>')
 def user_summary(user_id):
     """
@@ -450,11 +537,16 @@ def user_summary(user_id):
         return "User not found", 404
 
     total_quizzes = Quiz.query.count()
-    attempted_quizzes = Score.query.filter_by(user_id=user_id).count()
+    attempted_quizzes = (
+        db.session.query(db.func.count(db.func.distinct(Score.quiz_id)))
+        .filter(Score.user_id == user_id)
+        .scalar()
+    )
 
     # Subject-wise attempted quizzes
     subject_attempts = (
-        db.session.query(Subject.name, db.func.count(Score.id))
+        db.session.query(Subject.name, db.func.count(
+            db.func.distinct(Score.quiz_id)))
         .join(Chapter, Subject.id == Chapter.subject_id)
         .join(Quiz, Chapter.id == Quiz.chapter_id)
         .join(Score, Quiz.id == Score.quiz_id)
@@ -467,7 +559,7 @@ def user_summary(user_id):
     # Month-wise quiz attempts
     month_attempts = (
         db.session.query(db.func.strftime(
-            '%Y-%m', Score.time_stamp_of_attempt), db.func.count(Score.id))
+            '%Y-%m', Score.time_stamp_of_attempt), db.func.count(db.func.distinct(Score.quiz_id)))
         .filter(Score.user_id == user_id)
         .group_by(db.func.strftime('%Y-%m', Score.time_stamp_of_attempt))
         .all()

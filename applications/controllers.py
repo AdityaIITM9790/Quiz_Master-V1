@@ -32,9 +32,9 @@ def login():
                     quizzes = Quiz.query.all()  # Fetch all quizzes
                     return render_template('user_dash.html', quizzes=quizzes, this_user=this_user)
             else:
-                return render_template('login.html', error="Invalid credentials, please try again.")
+                return render_template('login.html', error_msg="Invalid credentials, please try again.")
         else:
-            return render_template('register.html', error="User not found, Please register.")
+            return render_template('register.html', error_msg="User not found, Please register.")
 
     return render_template('login.html')
 
@@ -57,7 +57,7 @@ def register():
         if this_user:  # will redirect to login page if user already exists
             return render_template('register.html')
 
-        # Create new user if not exists
+        # Create new user if user does not exists
         new_user = User(
             username=username, email=email, password=password,
             full_name=full_name, qualification=qualification, dob=dob, role="user"
@@ -73,7 +73,7 @@ def register():
 @app.route('/manage_users')
 def manage_users():
     '''
-    Manage all users registered
+    Manage all users which are registered
     '''
     users = User.query.filter_by(role='user').all()
     return render_template('manage_users.html', users=users)
@@ -159,7 +159,8 @@ def save_chapter(subject_id):
 @app.route('/edit_chapter/<int:chapter_id>')
 def edit_chapter(chapter_id):
     '''
-    redirecting to editing particular chapter
+    redirecting to editing particular chapter where user will fill the details
+    and this details will be saved to database on clicking save
     '''
     chapter = Chapter.query.get(chapter_id)
     return render_template('edit_chapter.html', chapter=chapter)
@@ -168,7 +169,8 @@ def edit_chapter(chapter_id):
 @app.route('/update_chapter/<int:chapter_id>', methods=['POST'])
 def update_chapter(chapter_id):
     '''
-    Updating the chapter based on the chapter id'''
+    Updating the chapter based on the chapter id
+    '''
     chapter = Chapter.query.get_or_404(chapter_id)
     chapter.name = request.form.get('name')
     chapter.description = request.form.get('description')
@@ -179,7 +181,8 @@ def update_chapter(chapter_id):
 @app.route('/delete_chapter/<int:chapter_id>')
 def delete_chapter(chapter_id):
     '''
-    Deleting a chapter based on the chapter id'''
+    Deleting a chapter based on the chapter id
+    '''
     chapter = Chapter.query.get(chapter_id)
     if chapter:
         db.session.delete(chapter)
@@ -192,6 +195,9 @@ def delete_chapter(chapter_id):
 
 @app.route('/delete_subject/<int:subject_id>', methods=['POST'])
 def delete_subject(subject_id):
+    '''
+    Delete a particular subject using its subject id
+    '''
     subject = Subject.query.get(subject_id)
 
     if subject:
@@ -271,7 +277,7 @@ def submit_quiz(quiz_id, user_id):
     this_user = User.query.get(user_id)
     quiz = Quiz.query.get(quiz_id)
     if not this_user:
-        return render_template('login.html', error="User not found. Please log in.")
+        return render_template('login.html', error_msg="User not found. Please log in.")
 
     questions = Question.query.filter_by(quiz_id=quiz_id).all()
 
@@ -328,7 +334,7 @@ def quiz_creator():
     search_query = request.args.get('chap_name', '')
 
     if not admin_user or admin_user.role != 'admin':
-        return render_template('login.html', error="Unauthorized access!")
+        return render_template('login.html', error_msg="Unauthorized access!")
 
     if search_query:
         quizzes = Quiz.query.join(Chapter).filter(
@@ -404,6 +410,9 @@ def delete_quiz_route(quiz_id):
 
 @app.route('/edit_quiz/<int:quiz_id>', methods=['GET', 'POST'])
 def edit_quiz(quiz_id):
+    '''
+    Admin can edit the quiz and change date, duration, remarks and number of questions
+    '''
     quiz = Quiz.query.get(quiz_id)
 
     if request.method == 'POST':
@@ -425,22 +434,22 @@ def edit_quiz(quiz_id):
 
 @app.route('/add_question/<int:chapter_id>/<int:quiz_id>')
 def add_question(chapter_id, quiz_id):
+    '''
+    Redirects to add question page where admin can add new question in the quiz based on quiz_id
+    '''
     quiz = Quiz.query.get(quiz_id)
     chapter = Chapter.query.get(chapter_id)
-
-    if not quiz or not chapter:
-        return "Invalid Quiz or Chapter", 404  # Handle invalid cases
 
     return render_template('add_question.html', chapter=chapter, quiz=quiz)
 
 
 @app.route('/edit_question/<int:quiz_id>')
 def edit_question(quiz_id):
+    '''
+    Edit the question based on quiz_id and chnge the entire question option or the correct answer
+    '''
     quiz = Quiz.query.get(quiz_id)
     questions = Question.query.filter_by(quiz_id=quiz_id).all()
-
-    if not quiz:
-        return "Quiz not found", 404
 
     return render_template('edit_question.html', quiz=quiz, questions=questions)
 
@@ -448,9 +457,8 @@ def edit_question(quiz_id):
 @app.route('/save_question/<int:quiz_id>', methods=['POST'])
 def save_question(quiz_id):
     quiz = Quiz.query.get(quiz_id)
-    chapter = Chapter.query.get(quiz.chapter_id)  # Ensure chapter is retrieved
+    # chapter = Chapter.query.get(quiz.chapter_id)
 
-    # Get form data
     title = request.form.get('question_title')
     statement = request.form.get('question_statement')
     option_a = request.form.get('option_a')
@@ -476,7 +484,7 @@ def save_question(quiz_id):
 
     quiz.num_questions = Question.query.filter_by(quiz_id=quiz.id).count()
     db.session.commit()
-    # Reload add_question.html with the chapter name
+
     quizzes = Quiz.query.all()
     return render_template('quiz_creator.html', quizzes=quizzes, this_user=User.query.filter_by(role='admin').first())
 
@@ -484,7 +492,7 @@ def save_question(quiz_id):
 @app.route('/manage_questions/<int:quiz_id>/<action>')
 def manage_questions(quiz_id, action):
     '''
-    Manahement of quizes for each quiz
+    Management of quizes for each quiz
     '''
     quiz = Quiz.query.get(quiz_id)
     questions = Question.query.filter_by(quiz_id=quiz_id).all()
@@ -546,7 +554,7 @@ def user_summary(user_id):
     # Subject-wise attempted quizzes
     subject_attempts = (
         db.session.query(Subject.name, db.func.count(
-            db.func.distinct(Score.quiz_id)))
+Score.quiz_id))
         .join(Chapter, Subject.id == Chapter.subject_id)
         .join(Quiz, Chapter.id == Quiz.chapter_id)
         .join(Score, Quiz.id == Score.quiz_id)
@@ -607,20 +615,11 @@ def admin_summary():
     Display a summary of all users' quiz activities with charts.
     """
 
-    # Get total quizzes available
+    # total quizzes available
     total_quizzes = Quiz.query.count()
 
-    # Get unique quizzes attempted at least once
-    total_attempted = db.session.query(db.func.count(
-        db.func.distinct(Score.quiz_id))).scalar() or 0
-
-    # Calculate quizzes not attempted
-    not_attempted = max(total_quizzes - total_attempted,
-                        0)  # Ensure non-negative
-
-    # Debugging print statement for quiz attempts
-    print(
-        f"DEBUG: Total Quizzes = {total_quizzes}, Unique Quizzes Attempted = {total_attempted}, Not Attempted = {not_attempted}")
+    # total users
+    total_users = User.query.count()
 
     # Get subject-wise top scorers
     subject_top_scorers = (
@@ -646,22 +645,6 @@ def admin_summary():
     )
     print(f"DEBUG: Average Scores per Subject = {avg_scores}")  # Debugging
 
-    # Get month-wise quiz attempts
-    month_attempts = (
-        db.session.query(db.func.strftime(
-            '%Y-%m', Score.time_stamp_of_attempt), db.func.count(Score.id))
-        .group_by(db.func.strftime('%Y-%m', Score.time_stamp_of_attempt))
-        .all()
-    )
-    print(f"DEBUG: Month-wise Quiz Attempts = {month_attempts}")  # Debugging
-
-    # Generate Charts (Ensuring Values Are Valid)
-    quiz_attempts_chart = generate_chart(
-        ['Attempted', 'Not Attempted'],
-        [total_attempted, not_attempted],
-        "Total Quizzes Attempted vs Not Attempted"
-    )
-
     avg_score_chart = generate_chart(
         [subject for subject, _ in avg_scores] or ["No Data"],
         [score for _, score in avg_scores] or [0],
@@ -669,18 +652,12 @@ def admin_summary():
         bar_chart=True
     )
 
-    month_chart = generate_chart(
-        [month for month, _ in month_attempts] or ["No Data"],
-        [count for _, count in month_attempts] or [0],
-        "Month-wise Quiz Attempts",
-        line_chart=True
-    )
 
     return render_template(
         'admin_summary.html',
-        quiz_attempts_chart=quiz_attempts_chart,
+        total_users=total_users,
+        total_quizzes=total_quizzes,
         avg_score_chart=avg_score_chart,
-        month_chart=month_chart,
         subject_top_scorers=subject_top_scorers
     )
 

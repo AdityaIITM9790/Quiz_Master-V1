@@ -21,8 +21,8 @@
                         <h2 class="text-center mb-3">Register</h2>
 
                         <!-- Error Message -->
-                        {% if error %}
-                        <div class="alert alert-danger text-center">{{ error }}</div>
+                        {% if error_msg %}
+                        <div class="alert alert-danger text-center">{{ error_msg }}</div>
                         {% endif %}
 
                         <form action="/register" method="POST">

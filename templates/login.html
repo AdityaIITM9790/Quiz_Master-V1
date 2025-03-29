@@ -18,8 +18,8 @@
                     <div class="card-body p-4">
                         <h2 class="text-center mb-4">Login</h2>
 
-                        {% if error %}
-                        <div class="alert alert-danger text-center">{{ error }}</div>
+                        {% if error_msg %}
+                        <div class="alert alert-danger text-center">{{ error_msg }}</div>
                         {% endif %}
 
                         <form action="/login" method="POST">
